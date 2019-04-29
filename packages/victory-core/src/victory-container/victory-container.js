@@ -47,6 +47,7 @@ export default class VictoryContainer extends React.Component {
     getTimer: PropTypes.func
   };
 
+
   constructor(props) {
     super(props);
     this.getTimer = this.getTimer.bind(this);
@@ -72,11 +73,30 @@ export default class VictoryContainer extends React.Component {
     };
   }
 
+  componentDidMount() {
+    if (this.svgRef.current) {
+      for (const key in this.props.events) {
+        if (this.props.events.hasOwnProperty(key)) {
+          this.svgRef.current.addEventListener(key.replace('on', '').toLowerCase(), this.props.events[key], {passive: false});
+        }
+      }
+    }
+  }
+
   componentWillUnmount() {
     if (!this.context.getTimer) {
       this.getTimer().stop();
     }
+    if (this.svgRef.current) {
+      for (const key in this.props.events) {
+        if (this.props.events.hasOwnProperty(key)) {
+          this.svgRef.current.removeEventListener(key.replace('on', '').toLowerCase(), this.props.events[key], {passive: false});
+        }
+      }
+    }
   }
+
+  svgRef = React.createRef();
 
   getTimer() {
     if (this.context.getTimer) {
@@ -128,7 +148,7 @@ export default class VictoryContainer extends React.Component {
     };
     return (
       <div style={defaults({}, style, divStyle)} className={className} ref={props.containerRef}>
-        <svg {...svgProps} style={svgStyle}>
+        <svg ref={this.svgRef} {...svgProps} style={svgStyle}>
           {title ? <title id={this.getIdForElement("title")}>{title}</title> : null}
           {desc ? <desc id={this.getIdForElement("desc")}>{desc}</desc> : null}
           {children}
@@ -141,7 +161,7 @@ export default class VictoryContainer extends React.Component {
   }
 
   render() {
-    const { width, height, responsive, events } = this.props;
+    const { width, height, responsive } = this.props;
     const style = responsive
       ? this.props.style
       : Helpers.omit(this.props.style, ["height", "width"]);
@@ -152,8 +172,7 @@ export default class VictoryContainer extends React.Component {
         role: "img",
         "aria-labelledby": `${this.getIdForElement("title")} ${this.getIdForElement("desc")}`,
         viewBox: responsive ? `0 0 ${width} ${height}` : undefined
-      },
-      events
+      }
     );
     return this.renderContainer(this.props, svgProps, style);
   }
